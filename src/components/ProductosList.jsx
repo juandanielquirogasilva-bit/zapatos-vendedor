@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+
 function ProductosList({ token, onLogout }) {
   const [productos, setProductos] = useState([])
   const [cargando, setCargando] = useState(true)
@@ -7,7 +9,7 @@ function ProductosList({ token, onLogout }) {
 
   const cargarProductos = () => {
     setCargando(true)
-    fetch('http://localhost:3001/productos')
+    fetch(`${API_URL}/productos`)
       .then((res) => res.json())
       .then((data) => {
         setProductos(data)
@@ -30,13 +32,13 @@ function ProductosList({ token, onLogout }) {
 
   const eliminarProducto = async (id) => {
     if (!confirm('¿Seguro que querés eliminar este producto? No se puede deshacer.')) return
-    const res = await authFetch(`http://localhost:3001/productos/${id}`, { method: 'DELETE' })
+    const res = await authFetch(`${API_URL}/productos/${id}`, { method: 'DELETE' })
     if (res.status === 401) return onLogout()
     cargarProductos()
   }
 
   const toggleVendido = async (producto) => {
-    const res = await authFetch(`http://localhost:3001/productos/${producto.id}`, {
+    const res = await authFetch(`${API_URL}/productos/${producto.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ vendido: !producto.vendido }),
@@ -48,7 +50,7 @@ function ProductosList({ token, onLogout }) {
   const activarOferta = async (producto) => {
     const precio = precioOfertaInputs[producto.id]
     if (!precio) return
-    const res = await authFetch(`http://localhost:3001/productos/${producto.id}`, {
+    const res = await authFetch(`${API_URL}/productos/${producto.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ oferta: true, precioOferta: parseFloat(precio) }),
@@ -59,7 +61,7 @@ function ProductosList({ token, onLogout }) {
   }
 
   const quitarOferta = async (producto) => {
-    const res = await authFetch(`http://localhost:3001/productos/${producto.id}`, {
+    const res = await authFetch(`${API_URL}/productos/${producto.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ oferta: false, precioOferta: null }),

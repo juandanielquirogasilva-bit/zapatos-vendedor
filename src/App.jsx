@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import ProductosList from './components/ProductosList'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+
 function App() {
   const [token, setToken] = useState(localStorage.getItem('vendorToken') || '')
   const [password, setPassword] = useState('')
@@ -26,7 +28,7 @@ function App() {
     setErrorLogin('')
     setValidando(true)
     try {
-      const res = await fetch('http://localhost:3001/login', {
+      const res = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
@@ -68,11 +70,11 @@ function App() {
     try {
       setSubiendo(true)
 
-      // 1. Subir las fotos
+      // 1. Subir las fotos a Cloudinary a través del backend
       const formData = new FormData()
       archivos.forEach((archivo) => formData.append('fotos', archivo))
 
-      const resUpload = await fetch('http://localhost:3001/upload', {
+      const resUpload = await fetch(`${API_URL}/upload`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -84,10 +86,16 @@ function App() {
         return
       }
 
-      const { urls } = await resUpload.json()
+      const dataUpload = await resUpload.json()
 
-      // 2. Crear el producto con las URLs que devolvió el servidor
-      const res = await fetch('http://localhost:3001/productos', {
+      if (!resUpload.ok) {
+        throw new Error(dataUpload.error || 'Error al subir las imágenes')
+      }
+
+      const { urls } = dataUpload
+
+      // 2. Crear el producto con las URLs que devolvió Cloudinary
+      const res = await fetch(`${API_URL}/productos`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -111,7 +119,7 @@ function App() {
         return
       }
 
-      if (!res.ok) throw new Error('Error al guardar')
+      if (!res.ok) throw new Error('Error al guardar el producto')
 
       setMensaje('✅ Producto agregado correctamente')
       setForm({
@@ -126,7 +134,7 @@ function App() {
       setArchivos([])
       e.target.reset()
     } catch (err) {
-      setMensaje('❌ Hubo un error al guardar el producto')
+      setMensaje(`❌ ${err.message || 'Hubo un error al guardar el producto'}`)
     } finally {
       setSubiendo(false)
     }
